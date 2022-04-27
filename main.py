@@ -5,12 +5,25 @@ import numpy as np
 
 
 class Engine:
+    fov = 90.0  # field of view in angles
+    fov_rad = 1 / np.tan(fov * 0.5 / 180 * np.pi)
+    far = 1000.0
+    near = 0.1
+    diff = far - near
+
     def __init__(self, app_name: str, window_size: tuple[int, int],
                  window_position: tuple[int, int], point_size: float):
         self.app_name = app_name
         self.window_size = window_size
         self.window_position = window_position
         self.point_size = point_size
+
+        aspect_ratio = float(window_size[0]) / float(window_size[1])
+
+        self.projector = np.array([[aspect_ratio * self.fov_rad, 0,            0,                                  0],
+                                   [0,                           self.fov_rad, 0,                                  0],
+                                   [0,                           0,            self.far / self.diff,               1],
+                                   [0,                           0,            - self.far * self.near / self.diff, 0]])
 
     def start(self) -> None:
         glutInit()
