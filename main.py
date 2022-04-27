@@ -43,13 +43,15 @@ class Engine:
         glVertex2f(100.0, 200.0)
         glEnd()
 
-        glBegin(GL_TRIANGLE_STRIP)
-        glVertex2f(100.0, 210.0)
-        glVertex2f(300.0, 210.0)
-        glVertex2f(300.0, 310.0)
-        glEnd()
-
         glFlush()
+
+    @staticmethod
+    def draw_triangle(triangle: tuple[np.array]) -> None:
+        glBegin(GL_TRIANGLE_STRIP)
+        glVertex2f(triangle[0][0], triangle[0][1])
+        glVertex2f(triangle[1][0], triangle[1][1])
+        glVertex2f(triangle[2][0], triangle[2][1])
+        glEnd()
 
 
 if __name__ == "__main__":
