@@ -1,5 +1,3 @@
-import copy
-
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -8,9 +6,9 @@ import numpy as np
 
 class Engine:
     fov = 90.0  # field of view in angles
-    fov_rad = 1 / np.tan(fov * 0.5 / 180 * np.pi)
-    far = 1000.0
-    near = 0.1
+    fov_rad = 1.0 / np.tan(fov * 0.5 / 180.0 * np.pi)
+    far = 20.0
+    near = 1.0
     diff = far - near
 
     def __init__(self, app_name: str, window_size: tuple[int, int],
@@ -20,7 +18,7 @@ class Engine:
         self.window_position = window_position
         self.point_size = point_size
 
-        aspect_ratio = float(window_size[0]) / float(window_size[1])
+        aspect_ratio = float(window_size[1]) / float(window_size[0])  # height / width
 
         self.projector = np.array([[aspect_ratio * self.fov_rad, 0,            0,                                  0],
                                    [0,                           self.fov_rad, 0,                                  0],
@@ -74,19 +72,17 @@ class Engine:
         s_coef = 1  # saturation scaler
         for triangle in self.mesh:
 
-            # get projection
-            triangle = self.matrix_4x4_mul_vector_4x1(self.get_projection_matrix(), triangle)
+            # Offset into the screen
+            offset = 3.0
+            for row in range(0, 3):
+                triangle[row][2] += offset
 
-            # move to centre
-            offset = 0.5
-            triangle = self.matrix_4x4_mul_vector_4x1(self.get_translation_matrix(offset, offset, offset), triangle)
+            # Get projection
+            triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
 
-            # scale = 0.3
-            # triangle = self.matrix_4x4_mul_vector_4x1(
-            #     self.get_scale_matrix(scale * self.window_size[0], scale * self.window_size[1], 1), triangle)
-
-            view_scale_1 = 0.2
-            view_scale_2 = 0.3
+            # Scale into view
+            view_scale_1 = 1
+            view_scale_2 = 0.5
 
             for row in range(0, 3):
                 for col in range(0, 2):
@@ -108,12 +104,12 @@ class Engine:
         glVertex2f(triangle[2][0], triangle[2][1])
         glEnd()
 
-    def apply_transformation(self, triangle: np.array) -> np.array:
+    def apply_transformation(self, t_matrix: np.array, triangle: np.array) -> np.array:
         transformed = np.zeros(shape=(3, 3), dtype=float)
 
         for idx in range(0, 3):
-            new_vector = self.matrix_4x4_mul_vector_4x1(self.projector, triangle[idx])
-            transformed[idx] = self.vector_from_homo_to_3d(new_vector)
+            homo_vector = self.matrix_4x4_mul_vector_4x1(t_matrix, triangle[idx])
+            transformed[idx] = self.vector_from_homo_to_3d(homo_vector)
 
         return transformed
 
