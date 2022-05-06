@@ -1,3 +1,5 @@
+import copy
+
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -26,16 +28,27 @@ class Engine:
                                    [0,                           0,            - self.far * self.near / self.diff, 0]])
 
         self.mesh = (
+            # Bottom
             np.array([[0.0,  0.0,  0.0],  [0.0,  1.0,  0.0],  [1.0,  1.0,  0.0]]),
             np.array([[0.0,  0.0,  0.0],  [1.0,  1.0,  0.0],  [1.0,  0.0,  0.0]]),
+
+            # Left visible
             np.array([[1.0,  0.0,  0.0],  [1.0,  1.0,  0.0],  [1.0,  1.0,  1.0]]),
             np.array([[1.0,  0.0,  0.0],  [1.0,  1.0,  1.0],  [1.0,  0.0,  1.0]]),
+
+            # Upper
             np.array([[1.0,  0.0,  1.0],  [1.0,  1.0,  1.0],  [0.0,  1.0,  1.0]]),
             np.array([[1.0,  0.0,  1.0],  [0.0,  1.0,  1.0],  [0.0,  0.0,  1.0]]),
+
+            # Right not visible
             np.array([[0.0,  0.0,  1.0],  [0.0,  1.0,  1.0],  [0.0,  1.0,  0.0]]),
             np.array([[0.0,  0.0,  1.0],  [0.0,  1.0,  0.0],  [0.0,  0.0,  0.0]]),
+
+            # Right visible
             np.array([[0.0,  1.0,  0.0],  [0.0,  1.0,  1.0],  [1.0,  1.0,  1.0]]),
             np.array([[0.0,  1.0,  0.0],  [1.0,  1.0,  1.0],  [1.0,  1.0,  0.0]]),
+
+            # Left not visible
             np.array([[1.0,  0.0,  1.0],  [0.0,  0.0,  1.0],  [0.0,  0.0,  0.0]]),
             np.array([[1.0,  0.0,  1.0],  [0.0,  0.0,  0.0],  [1.0,  0.0,  0.0]]),
         )
@@ -60,29 +73,27 @@ class Engine:
 
         s_coef = 1  # saturation scaler
         for triangle in self.mesh:
-            translated = np.array([np.copy(triangle[0]),
-                                   np.copy(triangle[1]),
-                                   np.copy(triangle[2])])
 
+            # get projection
+            triangle = self.matrix_4x4_mul_vector_4x1(self.get_projection_matrix(), triangle)
+
+            # move to centre
             offset = 0.5
-            translated = self.matrix_4x4_mul_vector_4x1(self.get_translation_matrix(offset, offset, offset), translated)
+            triangle = self.matrix_4x4_mul_vector_4x1(self.get_translation_matrix(offset, offset, offset), triangle)
 
-            # offset = 0
-            # for row in range(0, 3):
-            #     for col in range(0, 1):
-            #         translated[row][col] += offset
-
-            projected = self.matrix_4x4_mul_vector_4x1(self.get_projection_matrix(), translated)
+            # scale = 0.3
+            # triangle = self.matrix_4x4_mul_vector_4x1(
+            #     self.get_scale_matrix(scale * self.window_size[0], scale * self.window_size[1], 1), triangle)
 
             view_scale_1 = 0.2
             view_scale_2 = 0.3
 
             for row in range(0, 3):
                 for col in range(0, 2):
-                    projected[row][col] += view_scale_1
-                    projected[row][col] *= view_scale_2 * self.window_size[col]
+                    triangle[row][col] += view_scale_1
+                    triangle[row][col] *= view_scale_2 * self.window_size[col]
 
-            self.draw_triangle(projected, (0.1 * s_coef, 0.1 * s_coef, 0.1 * s_coef))
+            self.draw_triangle(triangle, (0.1 * s_coef, 0.1 * s_coef, 0.1 * s_coef))
             s_coef += 1
 
         glFlush()
