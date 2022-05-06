@@ -26,18 +26,18 @@ class Engine:
                                    [0,                           0,            - self.far * self.near / self.diff, 0]])
 
         self.mesh = (
-            np.array([[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]]),
-            np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]]),
-            np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0]]),
-            np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]]),
-            np.array([[1.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0]]),
-            np.array([[1.0, 0.0, 1.0], [0.0, 1.0, 1.0], [0.0, 0.0, 1.0]]),
-            np.array([[0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [0.0, 1.0, 0.0]]),
-            np.array([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]),
-            np.array([[0.0, 1.0, 0.0], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0]]),
-            np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 0.0]]),
-            np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]]),
-            np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),
+            np.array([[0.0,  0.0,  0.0],  [0.0,  1.0,  0.0],  [1.0,  1.0,  0.0]]),
+            np.array([[0.0,  0.0,  0.0],  [1.0,  1.0,  0.0],  [1.0,  0.0,  0.0]]),
+            np.array([[1.0,  0.0,  0.0],  [1.0,  1.0,  0.0],  [1.0,  1.0,  1.0]]),
+            np.array([[1.0,  0.0,  0.0],  [1.0,  1.0,  1.0],  [1.0,  0.0,  1.0]]),
+            np.array([[1.0,  0.0,  1.0],  [1.0,  1.0,  1.0],  [0.0,  1.0,  1.0]]),
+            np.array([[1.0,  0.0,  1.0],  [0.0,  1.0,  1.0],  [0.0,  0.0,  1.0]]),
+            np.array([[0.0,  0.0,  1.0],  [0.0,  1.0,  1.0],  [0.0,  1.0,  0.0]]),
+            np.array([[0.0,  0.0,  1.0],  [0.0,  1.0,  0.0],  [0.0,  0.0,  0.0]]),
+            np.array([[0.0,  1.0,  0.0],  [0.0,  1.0,  1.0],  [1.0,  1.0,  1.0]]),
+            np.array([[0.0,  1.0,  0.0],  [1.0,  1.0,  1.0],  [1.0,  1.0,  0.0]]),
+            np.array([[1.0,  0.0,  1.0],  [0.0,  0.0,  1.0],  [0.0,  0.0,  0.0]]),
+            np.array([[1.0,  0.0,  1.0],  [0.0,  0.0,  0.0],  [1.0,  0.0,  0.0]]),
         )
 
     def start(self) -> None:
@@ -64,14 +64,18 @@ class Engine:
                                    np.copy(triangle[1]),
                                    np.copy(triangle[2])])
 
-            offset = -1
-            for row in range(0, 3):
-                translated[row][2] += offset
+            offset = 0.5
+            translated = self.matrix_4x4_mul_vector_4x1(self.get_translation_matrix(offset, offset, offset), translated)
 
-            projected = self.get_projection(translated)
+            # offset = 0
+            # for row in range(0, 3):
+            #     for col in range(0, 1):
+            #         translated[row][col] += offset
 
-            view_scale_1 = 1.0
-            view_scale_2 = 0.5
+            projected = self.matrix_4x4_mul_vector_4x1(self.get_projection_matrix(), translated)
+
+            view_scale_1 = 0.2
+            view_scale_2 = 0.3
 
             for row in range(0, 3):
                 for col in range(0, 2):
@@ -93,16 +97,69 @@ class Engine:
         glVertex2f(triangle[2][0], triangle[2][1])
         glEnd()
 
-    def get_projection(self, triangle: np.array) -> np.array:
-        projection = np.zeros(shape=(3, 3), dtype=float)
+    def apply_transformation(self, triangle: np.array) -> np.array:
+        transformed = np.zeros(shape=(3, 3), dtype=float)
 
         for idx in range(0, 3):
-            projected = np.matmul( self.projector, np.array([triangle[idx][0], triangle[idx][1], triangle[idx][2], 1]) )
-            scalar = projected[-1]
-            if scalar == 0: scalar = 1
-            projection[idx] = np.array([ projected[0]/scalar, projected[1]/scalar, projected[2]/scalar ])
+            new_vector = self.matrix_4x4_mul_vector_4x1(self.projector, triangle[idx])
+            transformed[idx] = self.vector_from_homo_to_3d(new_vector)
 
-        return projection
+        return transformed
+
+    def get_projection_matrix(self):
+        return self.projector
+
+    @staticmethod
+    def get_translation_matrix(T_x: float, T_y: float, T_z: float) -> np.array:
+        return np.array([[1.0,  0.0,  0.0,  T_x],
+                         [0.0,  1.0,  0.0,  T_y],
+                         [0.0,  0.0,  1.0,  T_z],
+                         [0.0,  0.0,  0.0,  1.0]])
+
+    @staticmethod
+    def get_X_rotation_matrix(degree: float):
+        phi = np.deg2rad(degree)
+        return np.array([[1.0,      0.0,           0.0,      0.0],
+                         [0.0,  np.cos(phi),  -np.sin(phi),  0.0],
+                         [0.0,  np.sin(phi),   np.cos(phi),  0.0],
+                         [0.0,      0.0,           0.0,      1.0]])
+
+    @staticmethod
+    def get_Y_rotation_matrix(degree: float):
+        phi = np.deg2rad(degree)
+        return np.array([[ np.cos(phi),  0.0,  np.sin(phi),  0.0],
+                         [     0.0,      1.0,      0.0,      0.0],
+                         [-np.sin(phi),  0.0,  np.cos(phi),  0.0],
+                         [     0.0,      0.0,      0.0,      1.0]])
+
+    @staticmethod
+    def get_Z_rotation_matrix(degree: float):
+        phi = np.deg2rad(degree)
+        return np.array([[np.cos(phi),  -np.sin(phi),  0.0,  0.0],
+                         [np.sin(phi),   np.cos(phi),  0.0,  0.0],
+                         [    0.0,           0.0,      1.0,  0.0],
+                         [    0.0,           0.0,      0.0,  1.0]])
+
+    @staticmethod
+    def get_scale_matrix(S_x: float, S_y: float, S_z: float) -> np.array:
+        return np.array([[S_x,  0.0,  0.0,  0.0],
+                         [0.0,  S_y,  0.0,  0.0],
+                         [0.0,  0.0,  S_z,  0.0],
+                         [0.0,  0.0,  0.0,  1.0]])
+
+    @staticmethod
+    def vector_from_3d_to_homo(vector: np.array, w_value=1) -> np.array:
+        return np.array([vector[0], vector[1], vector[2], w_value], dtype=object)
+
+    @staticmethod
+    def vector_from_homo_to_3d(vector: np.array):
+        w = vector[3]
+        if w == 0: w = 1
+        return np.array([vector[0] / w, vector[1] / w, vector[2] / w])
+
+    @staticmethod
+    def matrix_4x4_mul_vector_4x1(matrix_4x4: np.array, vector_3x1: np.array):
+        return np.matmul(matrix_4x4, Engine.vector_from_3d_to_homo(vector_3x1))
 
 
 if __name__ == "__main__":
