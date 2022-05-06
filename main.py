@@ -25,6 +25,21 @@ class Engine:
                                    [0,                           0,            self.far / self.diff,               1],
                                    [0,                           0,            - self.far * self.near / self.diff, 0]])
 
+        self.mesh = (
+            np.array([[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]]),
+            np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]]),
+            np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0]]),
+            np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]]),
+            np.array([[1.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0]]),
+            np.array([[1.0, 0.0, 1.0], [0.0, 1.0, 1.0], [0.0, 0.0, 1.0]]),
+            np.array([[0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [0.0, 1.0, 0.0]]),
+            np.array([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]),
+            np.array([[0.0, 1.0, 0.0], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0]]),
+            np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 0.0]]),
+            np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]]),
+            np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),
+        )
+
     def start(self) -> None:
         glutInit()
         glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
@@ -37,12 +52,15 @@ class Engine:
 
     def on_user_create(self) -> None:
         glClearColor(0.0, 0.0, 0.0, 0.0)
-        glColor3f(1.0, 1.0, 1.0)
         glPointSize(self.point_size)
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
     def on_user_update(self) -> None:
         glClear(GL_COLOR_BUFFER_BIT)
+
+        self.draw_triangle(
+            np.array([[100.0, 210.0], [300.0, 210.0], [300.0, 310.0]]),
+            (0.2, 0.5, 0.4))
 
         glBegin(GL_POINTS)
         glVertex2f(100, 100)
@@ -59,7 +77,8 @@ class Engine:
         glFlush()
 
     @staticmethod
-    def draw_triangle(triangle: tuple[np.array]) -> None:
+    def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
+        glColor3f(color[0], color[1], color[2])
         glBegin(GL_TRIANGLE_STRIP)
         glVertex2f(triangle[0][0], triangle[0][1])
         glVertex2f(triangle[1][0], triangle[1][1])
