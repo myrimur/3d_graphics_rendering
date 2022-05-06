@@ -58,47 +58,33 @@ class Engine:
     def on_user_update(self) -> None:
         glClear(GL_COLOR_BUFFER_BIT)
 
+        s_coef = 1  # saturation scaler
         for triangle in self.mesh:
             translated = np.array([np.copy(triangle[0]),
                                    np.copy(triangle[1]),
                                    np.copy(triangle[2])])
-            translated[0][2] += 3.0
-            translated[1][2] += 3.0
-            translated[2][2] += 3.0
+
+            offset = -1
+            for row in range(0, 3):
+                translated[row][2] += offset
 
             projected = self.get_projection(translated)
-            projected[0][0] += 1.0
-            projected[0][1] += 1.0
-            projected[1][0] += 1.0
-            projected[1][1] += 1.0
-            projected[2][0] += 1.0
-            projected[2][1] += 1.0
 
-            projected[0][0] *= 0.5 * self.window_size[0]
-            projected[0][1] *= 0.5 * self.window_size[1]
-            projected[1][0] *= 0.5 * self.window_size[0]
-            projected[1][1] *= 0.5 * self.window_size[1]
-            projected[2][0] *= 0.5 * self.window_size[0]
-            projected[2][1] *= 0.5 * self.window_size[1]
+            view_scale_1 = 1.0
+            view_scale_2 = 0.5
 
-            self.draw_triangle(projected, (1.0, 1.0, 1.0))
+            for row in range(0, 3):
+                for col in range(0, 2):
+                    projected[row][col] += view_scale_1
+                    projected[row][col] *= view_scale_2 * self.window_size[col]
 
-        # glBegin(GL_POINTS)
-        # glVertex2f(100, 100)
-        # glVertex2f(300, 200)
-        # glEnd()
-        #
-        # glBegin(GL_QUADS)
-        # glVertex2f(100.0, 100.0)
-        # glVertex2f(300.0, 100.0)
-        # glVertex2f(300.0, 200.0)
-        # glVertex2f(100.0, 200.0)
-        # glEnd()
+            self.draw_triangle(projected, (0.1 * s_coef, 0.1 * s_coef, 0.1 * s_coef))
+            s_coef += 1
 
         glFlush()
 
     @staticmethod
-    def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None :
+    def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
         glColor3f(color[0], color[1], color[2])
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         glBegin(GL_TRIANGLE_STRIP)
@@ -112,9 +98,9 @@ class Engine:
 
         for idx in range(0, 3):
             projected = np.matmul( self.projector, np.array([triangle[idx][0], triangle[idx][1], triangle[idx][2], 1]) )
-            scaler = projected[-1]
-            if scaler == 0: scaler = 1
-            projection[idx] = np.array([ projected[0] / scaler, projected[1] / scaler, projected[2] / scaler ])
+            scalar = projected[-1]
+            if scalar == 0: scalar = 1
+            projection[idx] = np.array([ projected[0]/scalar, projected[1]/scalar, projected[2]/scalar ])
 
         return projection
 
