@@ -58,27 +58,49 @@ class Engine:
     def on_user_update(self) -> None:
         glClear(GL_COLOR_BUFFER_BIT)
 
-        self.draw_triangle(
-            np.array([[100.0, 210.0], [300.0, 210.0], [300.0, 310.0]]),
-            (0.2, 0.5, 0.4))
+        for triangle in self.mesh:
+            translated = np.array([np.copy(triangle[0]),
+                                   np.copy(triangle[1]),
+                                   np.copy(triangle[2])])
+            translated[0][2] += 3.0
+            translated[1][2] += 3.0
+            translated[2][2] += 3.0
 
-        glBegin(GL_POINTS)
-        glVertex2f(100, 100)
-        glVertex2f(300, 200)
-        glEnd()
+            projected = self.get_projection(translated)
+            projected[0][0] += 1.0
+            projected[0][1] += 1.0
+            projected[1][0] += 1.0
+            projected[1][1] += 1.0
+            projected[2][0] += 1.0
+            projected[2][1] += 1.0
 
-        glBegin(GL_QUADS)
-        glVertex2f(100.0, 100.0)
-        glVertex2f(300.0, 100.0)
-        glVertex2f(300.0, 200.0)
-        glVertex2f(100.0, 200.0)
-        glEnd()
+            projected[0][0] *= 0.5 * self.window_size[0]
+            projected[0][1] *= 0.5 * self.window_size[1]
+            projected[1][0] *= 0.5 * self.window_size[0]
+            projected[1][1] *= 0.5 * self.window_size[1]
+            projected[2][0] *= 0.5 * self.window_size[0]
+            projected[2][1] *= 0.5 * self.window_size[1]
+
+            self.draw_triangle(projected, (1.0, 1.0, 1.0))
+
+        # glBegin(GL_POINTS)
+        # glVertex2f(100, 100)
+        # glVertex2f(300, 200)
+        # glEnd()
+        #
+        # glBegin(GL_QUADS)
+        # glVertex2f(100.0, 100.0)
+        # glVertex2f(300.0, 100.0)
+        # glVertex2f(300.0, 200.0)
+        # glVertex2f(100.0, 200.0)
+        # glEnd()
 
         glFlush()
 
     @staticmethod
     def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None :
         glColor3f(color[0], color[1], color[2])
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         glBegin(GL_TRIANGLE_STRIP)
         glVertex2f(triangle[0][0], triangle[0][1])
         glVertex2f(triangle[1][0], triangle[1][1])
@@ -99,8 +121,4 @@ class Engine:
 
 if __name__ == "__main__":
     demo = Engine("3d_demo", (500, 500), (100, 100), 10.0)
-    # demo.start()
-
-    triangular = demo.mesh[0]
-    print("Original:\n", triangular)
-    print("Projected:\n", demo.get_projection( demo.mesh[0] ))
+    demo.start()
