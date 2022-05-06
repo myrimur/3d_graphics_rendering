@@ -77,7 +77,7 @@ class Engine:
         glFlush()
 
     @staticmethod
-    def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
+    def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None :
         glColor3f(color[0], color[1], color[2])
         glBegin(GL_TRIANGLE_STRIP)
         glVertex2f(triangle[0][0], triangle[0][1])
@@ -85,7 +85,22 @@ class Engine:
         glVertex2f(triangle[2][0], triangle[2][1])
         glEnd()
 
+    def get_projection(self, triangle: np.array) -> np.array:
+        projection = np.zeros(shape=(3, 3), dtype=float)
+
+        for idx in range(0, 3):
+            projected = np.matmul( self.projector, np.array([triangle[idx][0], triangle[idx][1], triangle[idx][2], 1]) )
+            scaler = projected[-1]
+            if scaler == 0: scaler = 1
+            projection[idx] = np.array([ projected[0] / scaler, projected[1] / scaler, projected[2] / scaler ])
+
+        return projection
+
 
 if __name__ == "__main__":
     demo = Engine("3d_demo", (500, 500), (100, 100), 10.0)
-    demo.start()
+    # demo.start()
+
+    triangular = demo.mesh[0]
+    print("Original:\n", triangular)
+    print("Projected:\n", demo.get_projection( demo.mesh[0] ))
