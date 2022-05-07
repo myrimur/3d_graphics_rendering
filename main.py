@@ -80,34 +80,35 @@ class Engine:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for triangle in self.mesh:
-
-            # Rotate by Z
-            triangle = self.apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
-
-            # Rotate by X
-            triangle = self.apply_transformation(self.get_X_rotation_matrix(self.alpha_X), triangle)
-
-            # Offset into the screen
-            offset = 3.0
-            for row in range(0, 3):
-                triangle[row][2] += offset
-
-            # Get projection
-            triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
-
-            # Scale into view
-            view_scale_1 = 1
-            view_scale_2 = 0.5
-            for row in range(0, 3):
-                for col in range(0, 2):
-                    triangle[row][col] += view_scale_1
-                    triangle[row][col] *= view_scale_2 * self.window_size[col]
-
-            self.draw_triangle(triangle, (0.1, 0.1, 0.1))
-
+            self.render_triangle(triangle)
         glFlush()
 
         sleep(self.DELAY)
+
+    def render_triangle(self, triangle: np.array) -> None:
+        # Rotate by Z
+        triangle = self.apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
+
+        # Rotate by X
+        triangle = self.apply_transformation(self.get_X_rotation_matrix(self.alpha_X), triangle)
+
+        # Offset into the screen
+        offset = 3.0
+        for row in range(0, 3):
+            triangle[row][2] += offset
+
+        # Get projection
+        triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
+
+        # Scale into view
+        view_scale_1 = 1
+        view_scale_2 = 0.5
+        for row in range(0, 3):
+            for col in range(0, 2):
+                triangle[row][col] += view_scale_1
+                triangle[row][col] *= view_scale_2 * self.window_size[col]
+
+        self.draw_triangle(triangle, (1, 1, 1))
 
     def buttons(self, key, x, y):
         if key == b'a':
