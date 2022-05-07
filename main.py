@@ -8,8 +8,10 @@ import numpy as np
 
 class Engine:
     DELAY = 0.01  # time between frames in seconds
+
     DELTA_ALPHA = 1.0
     DELTA_MOVE = 0.1
+    DELTA_ZOOM = 0.1
 
     fov = 90.0  # field of view in angles
     fov_rad = 1.0 / np.tan(fov * 0.5 / 180.0 * np.pi)
@@ -64,6 +66,8 @@ class Engine:
         self.move_X = 0.0
         self.move_Y = 0.0
 
+        self.zoom = 1.0
+
     def start(self) -> None:
         glutInit()
         glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
@@ -75,6 +79,8 @@ class Engine:
         glutDisplayFunc(self.on_user_update)
         glutKeyboardFunc(self.WASD)
         glutSpecialFunc(self.arrows)
+        glutMouseFunc(self.mouse)
+        glutMouseWheelFunc(self.mouse_wheel)
 
         glutMainLoop()
 
@@ -110,6 +116,9 @@ class Engine:
         # Get projection
         triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
 
+        # Zoom in or out
+        triangle = self.apply_transformation(self.get_scale_matrix(self.zoom, self.zoom, self.zoom), triangle)
+
         # Scale into view
         view_scale_1 = 1
         view_scale_2 = 0.5
@@ -140,6 +149,15 @@ class Engine:
             self.move_Y -= self.DELTA_MOVE
         if key == GLUT_KEY_DOWN:
             self.move_Y += self.DELTA_MOVE
+        glutPostRedisplay()
+
+    def mouse(self, button, state, x, y):
+        pass
+
+    def mouse_wheel(self, wheel, direction, x, y):
+        if direction < 0 and self.zoom <= 0.1005:  # restriction on the small size
+            return
+        self.zoom += direction * self.DELTA_ZOOM
         glutPostRedisplay()
 
     @staticmethod
