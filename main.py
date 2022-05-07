@@ -1,3 +1,5 @@
+from time import sleep
+
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -68,31 +70,48 @@ class Engine:
 
     def on_user_update(self) -> None:
         glClear(GL_COLOR_BUFFER_BIT)
+        DELAY = 0.01  # time between frames in seconds
 
-        s_coef = 1  # saturation scaler
-        for triangle in self.mesh:
+        alpha = 0.0
 
-            # Offset into the screen
-            offset = 3.0
-            for row in range(0, 3):
-                triangle[row][2] += offset
+        while True:
+            # Clear previous object
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-            # Get projection
-            triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
+            alpha += 1.0
 
-            # Scale into view
-            view_scale_1 = 1
-            view_scale_2 = 0.5
+            s_coef = 1  # saturation scaler
+            for triangle in self.mesh:
 
-            for row in range(0, 3):
-                for col in range(0, 2):
-                    triangle[row][col] += view_scale_1
-                    triangle[row][col] *= view_scale_2 * self.window_size[col]
+                # Rotate by Z
+                triangle = self.apply_transformation(self.get_Z_rotation_matrix(alpha), triangle)
 
-            self.draw_triangle(triangle, (0.1 * s_coef, 0.1 * s_coef, 0.1 * s_coef))
-            s_coef += 1
+                # Rotate by X
+                x_rotation_scaler = 0.5
+                triangle = self.apply_transformation(self.get_X_rotation_matrix(x_rotation_scaler * alpha), triangle)
 
-        glFlush()
+                # Offset into the screen
+                offset = 3.0
+                for row in range(0, 3):
+                    triangle[row][2] += offset
+
+                # Get projection
+                triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
+
+                # Scale into view
+                view_scale_1 = 1
+                view_scale_2 = 0.5
+
+                for row in range(0, 3):
+                    for col in range(0, 2):
+                        triangle[row][col] += view_scale_1
+                        triangle[row][col] *= view_scale_2 * self.window_size[col]
+
+                self.draw_triangle(triangle, (0.1 * s_coef, 0.1 * s_coef, 0.1 * s_coef))
+                s_coef += 1
+
+            glFlush()
+            sleep(DELAY)
 
     @staticmethod
     def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
