@@ -7,6 +7,8 @@ import numpy as np
 
 
 class Engine:
+    DELAY = 0.01  # time between frames in seconds
+
     fov = 90.0  # field of view in angles
     fov_rad = 1.0 / np.tan(fov * 0.5 / 180.0 * np.pi)
     far = 20.0
@@ -16,6 +18,7 @@ class Engine:
     def __init__(self, app_name: str, window_size: tuple[int, int],
                  window_position: tuple[int, int], point_size: float):
         self.app_name = app_name
+        self.window = None
         self.window_size = window_size
         self.window_position = window_position
         self.point_size = point_size
@@ -53,14 +56,19 @@ class Engine:
             np.array([[1.0,  0.0,  1.0],  [0.0,  0.0,  0.0],  [1.0,  0.0,  0.0]]),
         )
 
+        self.alpha_X = 0.0
+        self.alpha_Z = 0.0
+        # self.transformation_on_key = None
+
     def start(self) -> None:
         glutInit()
         glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
         glutInitWindowSize(self.window_size[0], self.window_size[1])
         glutInitWindowPosition(self.window_position[0], self.window_position[1])
-        glutCreateWindow(self.app_name)
+        self.window = glutCreateWindow(self.app_name)
         self.on_user_create()
         glutDisplayFunc(self.on_user_update)
+        glutKeyboardFunc(self.buttons)
         glutMainLoop()
 
     def on_user_create(self) -> None:
@@ -69,49 +77,48 @@ class Engine:
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
     def on_user_update(self) -> None:
-        glClear(GL_COLOR_BUFFER_BIT)
-        DELAY = 0.01  # time between frames in seconds
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        alpha = 0.0
+        for triangle in self.mesh:
 
-        while True:
-            # Clear previous object
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            # Rotate by Z
+            triangle = self.apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
 
-            alpha += 1.0
+            # Rotate by X
+            triangle = self.apply_transformation(self.get_X_rotation_matrix(self.alpha_X), triangle)
 
-            s_coef = 1  # saturation scaler
-            for triangle in self.mesh:
+            # Offset into the screen
+            offset = 3.0
+            for row in range(0, 3):
+                triangle[row][2] += offset
 
-                # Rotate by Z
-                triangle = self.apply_transformation(self.get_Z_rotation_matrix(alpha), triangle)
+            # Get projection
+            triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
 
-                # Rotate by X
-                x_rotation_scaler = 0.5
-                triangle = self.apply_transformation(self.get_X_rotation_matrix(x_rotation_scaler * alpha), triangle)
+            # Scale into view
+            view_scale_1 = 1
+            view_scale_2 = 0.5
+            for row in range(0, 3):
+                for col in range(0, 2):
+                    triangle[row][col] += view_scale_1
+                    triangle[row][col] *= view_scale_2 * self.window_size[col]
 
-                # Offset into the screen
-                offset = 3.0
-                for row in range(0, 3):
-                    triangle[row][2] += offset
+            self.draw_triangle(triangle, (0.1, 0.1, 0.1))
 
-                # Get projection
-                triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
+        glFlush()
 
-                # Scale into view
-                view_scale_1 = 1
-                view_scale_2 = 0.5
+        sleep(self.DELAY)
 
-                for row in range(0, 3):
-                    for col in range(0, 2):
-                        triangle[row][col] += view_scale_1
-                        triangle[row][col] *= view_scale_2 * self.window_size[col]
-
-                self.draw_triangle(triangle, (0.1 * s_coef, 0.1 * s_coef, 0.1 * s_coef))
-                s_coef += 1
-
-            glFlush()
-            sleep(DELAY)
+    def buttons(self, key, x, y):
+        if key == b'a':
+            self.alpha_Z += 1.0
+        if key == b'd':
+            self.alpha_Z -= 1.0
+        if key == b'w':
+            self.alpha_X += 1.0
+        if key == b's':
+            self.alpha_X -= 1.0
+        glutPostRedisplay()
 
     @staticmethod
     def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
