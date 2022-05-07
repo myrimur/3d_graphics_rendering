@@ -155,7 +155,10 @@ class Engine:
         pass
 
     def mouse_wheel(self, wheel, direction, x, y):
+        if direction < 0 and self.zoom <= 0.1005:  # restriction on the small size
+            return
         self.zoom += direction * self.DELTA_ZOOM
+        glutPostRedisplay()
 
     @staticmethod
     def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
