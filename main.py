@@ -8,6 +8,8 @@ import numpy as np
 
 class Engine:
     DELAY = 0.01  # time between frames in seconds
+    DELTA_ALPHA = 1.0
+    DELTA_MOVE = 0.1
 
     fov = 90.0  # field of view in angles
     fov_rad = 1.0 / np.tan(fov * 0.5 / 180.0 * np.pi)
@@ -58,7 +60,9 @@ class Engine:
 
         self.alpha_X = 0.0
         self.alpha_Z = 0.0
-        # self.transformation_on_key = None
+
+        self.move_X = 0.0
+        self.move_Y = 0.0
 
     def start(self) -> None:
         glutInit()
@@ -67,8 +71,11 @@ class Engine:
         glutInitWindowPosition(self.window_position[0], self.window_position[1])
         self.window = glutCreateWindow(self.app_name)
         self.on_user_create()
+
         glutDisplayFunc(self.on_user_update)
-        glutKeyboardFunc(self.buttons)
+        glutKeyboardFunc(self.WASD)
+        glutSpecialFunc(self.arrows)
+
         glutMainLoop()
 
     def on_user_create(self) -> None:
@@ -97,6 +104,9 @@ class Engine:
         for row in range(0, 3):
             triangle[row][2] += offset
 
+        # Move in space
+        triangle = self.apply_transformation(self.get_translation_matrix(self.move_X, self.move_Y, 0.0), triangle)
+
         # Get projection
         triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
 
@@ -110,15 +120,26 @@ class Engine:
 
         self.draw_triangle(triangle, (1, 1, 1))
 
-    def buttons(self, key, x, y):
+    def WASD(self, key, x, y):
         if key == b'a':
-            self.alpha_Z += 1.0
+            self.alpha_Z += self.DELTA_ALPHA
         if key == b'd':
-            self.alpha_Z -= 1.0
+            self.alpha_Z -= self.DELTA_ALPHA
         if key == b'w':
-            self.alpha_X += 1.0
+            self.alpha_X += self.DELTA_ALPHA
         if key == b's':
-            self.alpha_X -= 1.0
+            self.alpha_X -= self.DELTA_ALPHA
+        glutPostRedisplay()
+
+    def arrows(self, key, x, y):
+        if key == GLUT_KEY_LEFT:
+            self.move_X += self.DELTA_MOVE
+        if key == GLUT_KEY_RIGHT:
+            self.move_X -= self.DELTA_MOVE
+        if key == GLUT_KEY_UP:
+            self.move_Y -= self.DELTA_MOVE
+        if key == GLUT_KEY_DOWN:
+            self.move_Y += self.DELTA_MOVE
         glutPostRedisplay()
 
     @staticmethod
