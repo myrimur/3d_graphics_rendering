@@ -7,6 +7,10 @@ import numpy as np
 
 
 class Engine:
+    DELAY = 0.01  # time between frames in seconds
+    DELTA_ALPHA = 1.0
+    DELTA_MOVE = 0.1
+
     fov = 90.0  # field of view in angles
     fov_rad = 1.0 / np.tan(fov * 0.5 / 180.0 * np.pi)
     far = 20.0
@@ -16,6 +20,7 @@ class Engine:
     def __init__(self, app_name: str, window_size: tuple[int, int],
                  window_position: tuple[int, int], point_size: float):
         self.app_name = app_name
+        self.window = None
         self.window_size = window_size
         self.window_position = window_position
         self.point_size = point_size
@@ -53,14 +58,24 @@ class Engine:
             np.array([[1.0,  0.0,  1.0],  [0.0,  0.0,  0.0],  [1.0,  0.0,  0.0]]),
         )
 
+        self.alpha_X = 0.0
+        self.alpha_Z = 0.0
+
+        self.move_X = 0.0
+        self.move_Y = 0.0
+
     def start(self) -> None:
         glutInit()
         glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
         glutInitWindowSize(self.window_size[0], self.window_size[1])
         glutInitWindowPosition(self.window_position[0], self.window_position[1])
-        glutCreateWindow(self.app_name)
+        self.window = glutCreateWindow(self.app_name)
         self.on_user_create()
+
         glutDisplayFunc(self.on_user_update)
+        glutKeyboardFunc(self.WASD)
+        glutSpecialFunc(self.arrows)
+
         glutMainLoop()
 
     def on_user_create(self) -> None:
@@ -69,49 +84,63 @@ class Engine:
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
     def on_user_update(self) -> None:
-        glClear(GL_COLOR_BUFFER_BIT)
-        DELAY = 0.01  # time between frames in seconds
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        alpha = 0.0
+        for triangle in self.mesh:
+            self.render_triangle(triangle)
+        glFlush()
 
-        while True:
-            # Clear previous object
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        sleep(self.DELAY)
 
-            alpha += 1.0
+    def render_triangle(self, triangle: np.array) -> None:
+        # Rotate by Z
+        triangle = self.apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
 
-            s_coef = 1  # saturation scaler
-            for triangle in self.mesh:
+        # Rotate by X
+        triangle = self.apply_transformation(self.get_X_rotation_matrix(self.alpha_X), triangle)
 
-                # Rotate by Z
-                triangle = self.apply_transformation(self.get_Z_rotation_matrix(alpha), triangle)
+        # Offset into the screen
+        offset = 3.0
+        for row in range(0, 3):
+            triangle[row][2] += offset
 
-                # Rotate by X
-                x_rotation_scaler = 0.5
-                triangle = self.apply_transformation(self.get_X_rotation_matrix(x_rotation_scaler * alpha), triangle)
+        # Move in space
+        triangle = self.apply_transformation(self.get_translation_matrix(self.move_X, self.move_Y, 0.0), triangle)
 
-                # Offset into the screen
-                offset = 3.0
-                for row in range(0, 3):
-                    triangle[row][2] += offset
+        # Get projection
+        triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
 
-                # Get projection
-                triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
+        # Scale into view
+        view_scale_1 = 1
+        view_scale_2 = 0.5
+        for row in range(0, 3):
+            for col in range(0, 2):
+                triangle[row][col] += view_scale_1
+                triangle[row][col] *= view_scale_2 * self.window_size[col]
 
-                # Scale into view
-                view_scale_1 = 1
-                view_scale_2 = 0.5
+        self.draw_triangle(triangle, (1, 1, 1))
 
-                for row in range(0, 3):
-                    for col in range(0, 2):
-                        triangle[row][col] += view_scale_1
-                        triangle[row][col] *= view_scale_2 * self.window_size[col]
+    def WASD(self, key, x, y):
+        if key == b'a':
+            self.alpha_Z += self.DELTA_ALPHA
+        if key == b'd':
+            self.alpha_Z -= self.DELTA_ALPHA
+        if key == b'w':
+            self.alpha_X += self.DELTA_ALPHA
+        if key == b's':
+            self.alpha_X -= self.DELTA_ALPHA
+        glutPostRedisplay()
 
-                self.draw_triangle(triangle, (0.1 * s_coef, 0.1 * s_coef, 0.1 * s_coef))
-                s_coef += 1
-
-            glFlush()
-            sleep(DELAY)
+    def arrows(self, key, x, y):
+        if key == GLUT_KEY_LEFT:
+            self.move_X += self.DELTA_MOVE
+        if key == GLUT_KEY_RIGHT:
+            self.move_X -= self.DELTA_MOVE
+        if key == GLUT_KEY_UP:
+            self.move_Y -= self.DELTA_MOVE
+        if key == GLUT_KEY_DOWN:
+            self.move_Y += self.DELTA_MOVE
+        glutPostRedisplay()
 
     @staticmethod
     def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
