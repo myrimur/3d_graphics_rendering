@@ -20,12 +20,13 @@ class Engine:
     diff = far - near
 
     def __init__(self, app_name: str, window_size: tuple[int, int],
-                 window_position: tuple[int, int], point_size: float):
+                 window_position: tuple[int, int], point_size: float, color: tuple[int, int, int]):
         self.app_name = app_name
         self.window = None
         self.window_size = window_size
         self.window_position = window_position
         self.point_size = point_size
+        self.color = (color[0] / 255, color[1] / 255, color[2] / 255)
 
         aspect_ratio = float(window_size[1]) / float(window_size[0])  # height / width
 
@@ -106,7 +107,7 @@ class Engine:
         triangles = sorted(triangles, key=lambda pair: pair[0][0][2] + pair[0][1][2] + pair[0][2][2])
 
         for triangle, scaler in triangles:
-            self.draw_triangle(triangle, (0.1 * scaler, 0.4 * scaler, 0.6 * scaler))
+            self.draw_triangle(triangle, (self.color[0] * scaler, self.color[1] * scaler, self.color[2] * scaler))
 
         glFlush()
 
@@ -201,12 +202,12 @@ class Engine:
         glVertex2f(triangle[2][0], triangle[2][1])
         glEnd()
 
-        glColor3f(color[0] / 2, color[1] / 2, color[2] / 2)
-        glBegin(GL_LINE_STRIP)
-        glVertex2f(triangle[0][0], triangle[0][1])
-        glVertex2f(triangle[1][0], triangle[1][1])
-        glVertex2f(triangle[2][0], triangle[2][1])
-        glEnd()
+        # glColor3f(color[0] / 2, color[1] / 2, color[2] / 2)
+        # glBegin(GL_LINE_STRIP)
+        # glVertex2f(triangle[0][0], triangle[0][1])
+        # glVertex2f(triangle[1][0], triangle[1][1])
+        # glVertex2f(triangle[2][0], triangle[2][1])
+        # glEnd()
 
     def apply_transformation(self, t_matrix: np.array, triangle: np.array) -> np.array:
         transformed = np.zeros(shape=(3, 3), dtype=float)
@@ -283,5 +284,5 @@ class Engine:
 
 
 if __name__ == "__main__":
-    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0)
+    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0, (0, 102, 200))
     demo.start()
