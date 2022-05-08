@@ -95,18 +95,20 @@ class Engine:
 
     def on_user_update(self) -> None:
         triangles = []
+        colors = []
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for triangle in self.mesh:
-            triangle = self.project_triangle(triangle)
+            triangle, color = self.project_triangle(triangle)
             if triangle is not None:
                 triangles.append(triangle)
+                colors.append(color)
 
         triangles = sorted(triangles, key=lambda arr2d: arr2d[0][2] + arr2d[1][2] + arr2d[2][2])
 
-        for triangle in triangles:
-            self.draw_triangle(triangle, (0.5, 0.5, 0.5))
+        for idx in range(0, len(triangles)):
+            self.draw_triangle(triangles[idx], (colors[idx], colors[idx], colors[idx]))
 
         glFlush()
 
@@ -133,12 +135,14 @@ class Engine:
         # If dot product of triangle's normal and camera-triangle
         # direction is positive, then not
         if np.dot(normal, triangle[0] - self.camera) > 0:
-            return None
+            return None, None
 
         # Illumination
         # dot product is in range [-1, 1] because vectors are
         # normalized
         dot_product = np.dot(normal, self.light_direction / np.linalg.norm(self.light_direction))
+        color = self.get_color(float(dot_product))
+        # print(color)
 
         # Get projection
         triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
@@ -154,7 +158,10 @@ class Engine:
                 triangle[row][col] += view_scale_1
                 triangle[row][col] *= view_scale_2 * self.window_size[col]
 
-        return triangle
+        return triangle, color
+
+    def get_color(self, dp: float):
+        return 0.1 * (1.0 + dp)
 
     def WASD(self, key, x, y):
         if key == b'a':
