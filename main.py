@@ -20,12 +20,13 @@ class Engine:
     diff = far - near
 
     def __init__(self, app_name: str, window_size: tuple[int, int],
-                 window_position: tuple[int, int], point_size: float):
+                 window_position: tuple[int, int], point_size: float, color: tuple[int, int, int]):
         self.app_name = app_name
         self.window = None
         self.window_size = window_size
         self.window_position = window_position
         self.point_size = point_size
+        self.color = (color[0] / 255, color[1] / 255, color[2] / 255)
 
         aspect_ratio = float(window_size[1]) / float(window_size[0])  # height / width
 
@@ -68,6 +69,10 @@ class Engine:
 
         self.zoom = 1.0
 
+        self.camera = np.array([0.0, 0.0, 0.0])
+
+        self.light_direction = np.array([0.0, 0.0, -1.0])
+
     def start(self) -> None:
         glutInit()
         glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
@@ -90,15 +95,25 @@ class Engine:
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
     def on_user_update(self) -> None:
+        triangles = []
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for triangle in self.mesh:
-            self.render_triangle(triangle)
+            pair = self.project_triangle(triangle)
+            if pair is not None:
+                triangles.append(pair)
+
+        triangles = sorted(triangles, key=lambda pair: pair[0][0][2] + pair[0][1][2] + pair[0][2][2])
+
+        for triangle, scaler in triangles:
+            self.draw_triangle(triangle, (self.color[0] * scaler, self.color[1] * scaler, self.color[2] * scaler))
+
         glFlush()
 
         sleep(self.DELAY)
 
-    def render_triangle(self, triangle: np.array) -> None:
+    def project_triangle(self, triangle: np.array) -> np.array:
         # Rotate by Z
         triangle = self.apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
 
@@ -112,6 +127,20 @@ class Engine:
 
         # Move in space
         triangle = self.apply_transformation(self.get_translation_matrix(self.move_X, self.move_Y, 0.0), triangle)
+
+        normal = self.get_normal(triangle)
+
+        # Is triangle visible?
+        # If dot product of triangle's normal and camera-triangle
+        # direction is positive, then not
+        if np.dot(normal, triangle[0] - self.camera) > 0:
+            return None
+
+        # Illumination
+        # dot product is in range [-1, 1] because vectors are
+        # normalized
+        dot_product = np.dot(normal, self.light_direction / np.linalg.norm(self.light_direction))
+        color = self.get_color_scaler(float(dot_product))
 
         # Get projection
         triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
@@ -127,8 +156,11 @@ class Engine:
                 triangle[row][col] += view_scale_1
                 triangle[row][col] *= view_scale_2 * self.window_size[col]
 
-        if self.triangle_is_visible(triangle):
-            self.draw_triangle(triangle, (1, 1, 1))
+        return triangle, color
+
+    @staticmethod
+    def get_color_scaler(dp: float):
+        return (1.5 + dp) / 2.5
 
     def WASD(self, key, x, y):
         if key == b'a':
@@ -164,12 +196,18 @@ class Engine:
     @staticmethod
     def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
         glColor3f(color[0], color[1], color[2])
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         glBegin(GL_TRIANGLE_STRIP)
         glVertex2f(triangle[0][0], triangle[0][1])
         glVertex2f(triangle[1][0], triangle[1][1])
         glVertex2f(triangle[2][0], triangle[2][1])
         glEnd()
+
+        # glColor3f(color[0] / 2, color[1] / 2, color[2] / 2)
+        # glBegin(GL_LINE_STRIP)
+        # glVertex2f(triangle[0][0], triangle[0][1])
+        # glVertex2f(triangle[1][0], triangle[1][1])
+        # glVertex2f(triangle[2][0], triangle[2][1])
+        # glEnd()
 
     def apply_transformation(self, t_matrix: np.array, triangle: np.array) -> np.array:
         transformed = np.zeros(shape=(3, 3), dtype=float)
@@ -236,16 +274,15 @@ class Engine:
         return np.matmul(matrix_4x4, Engine.vector_from_3d_to_homo(vector_3x1))
 
     @staticmethod
-    def triangle_is_visible(triangle: np.array):
+    def get_normal(triangle: np.array):
         edge_1 = triangle[1] - triangle[0]
         edge_2 = triangle[2] - triangle[0]
 
         normal = np.cross(edge_1, edge_2)
-        normal / np.linalg.norm(normal)
 
-        return normal[2] < 0
+        return normal / np.linalg.norm(normal)
 
 
 if __name__ == "__main__":
-    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0)
+    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0, (0, 102, 200))
     demo.start()
