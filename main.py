@@ -95,7 +95,7 @@ class Engine:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for triangle in self.mesh:
-            triangle = self.render_triangle(triangle)
+            triangle = self.project_triangle(triangle)
             if triangle is not None:
                 triangles.append(triangle)
 
@@ -108,7 +108,7 @@ class Engine:
 
         sleep(self.DELAY)
 
-    def render_triangle(self, triangle: np.array) -> np.array:
+    def project_triangle(self, triangle: np.array) -> np.array:
         # Rotate by Z
         triangle = self.apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
 
@@ -138,9 +138,7 @@ class Engine:
                 triangle[row][col] *= view_scale_2 * self.window_size[col]
 
         if self.triangle_is_visible(triangle):
-            self.draw_triangle(triangle, (1, 1, 1))
             return triangle
-
         return None
 
     def WASD(self, key, x, y):
