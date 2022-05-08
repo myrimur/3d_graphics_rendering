@@ -125,7 +125,9 @@ class Engine:
         # Move in space
         triangle = self.apply_transformation(self.get_translation_matrix(self.move_X, self.move_Y, 0.0), triangle)
 
-        if not self.triangle_is_visible(triangle):
+        normal = self.get_normal(triangle)
+
+        if np.dot(normal, triangle[0] - self.camera) > 0:
             return None
 
         # Get projection
@@ -255,16 +257,14 @@ class Engine:
     def matrix_4x4_mul_vector_4x1(matrix_4x4: np.array, vector_3x1: np.array):
         return np.matmul(matrix_4x4, Engine.vector_from_3d_to_homo(vector_3x1))
 
-    def triangle_is_visible(self, triangle: np.array):
+    @staticmethod
+    def get_normal(triangle: np.array):
         edge_1 = triangle[1] - triangle[0]
         edge_2 = triangle[2] - triangle[0]
 
         normal = np.cross(edge_1, edge_2)
-        normal / np.linalg.norm(normal)
 
-        direction = triangle[0] - self.camera
-
-        return np.dot(normal, direction) < 0
+        return normal / np.linalg.norm(normal)
 
 
 if __name__ == "__main__":
