@@ -68,6 +68,8 @@ class Engine:
 
         self.zoom = 1.0
 
+        self.camera = np.array([0.0, 0.0, 0.0])
+
     def start(self) -> None:
         glutInit()
         glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
@@ -123,6 +125,9 @@ class Engine:
         # Move in space
         triangle = self.apply_transformation(self.get_translation_matrix(self.move_X, self.move_Y, 0.0), triangle)
 
+        if not self.triangle_is_visible(triangle):
+            return None
+
         # Get projection
         triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
 
@@ -137,11 +142,9 @@ class Engine:
                 triangle[row][col] += view_scale_1
                 triangle[row][col] *= view_scale_2 * self.window_size[col]
 
-        if self.triangle_is_visible(triangle):
-            self.draw_triangle(triangle, (1, 1, 1))
-            return triangle
+        self.draw_triangle(triangle, (1, 1, 1))
 
-        return None
+        return triangle
 
     def WASD(self, key, x, y):
         if key == b'a':
@@ -254,15 +257,16 @@ class Engine:
     def matrix_4x4_mul_vector_4x1(matrix_4x4: np.array, vector_3x1: np.array):
         return np.matmul(matrix_4x4, Engine.vector_from_3d_to_homo(vector_3x1))
 
-    @staticmethod
-    def triangle_is_visible(triangle: np.array):
+    def triangle_is_visible(self, triangle: np.array):
         edge_1 = triangle[1] - triangle[0]
         edge_2 = triangle[2] - triangle[0]
 
         normal = np.cross(edge_1, edge_2)
         normal / np.linalg.norm(normal)
 
-        return normal[2] < 0
+        direction = triangle[0] - self.camera
+
+        return np.dot(normal, direction) < 0
 
 
 if __name__ == "__main__":
