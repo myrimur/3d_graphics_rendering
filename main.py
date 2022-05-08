@@ -10,6 +10,7 @@ class Engine:
     DELAY = 0.01  # time between frames in seconds
 
     DELTA_ALPHA = 1.0
+    DELTA_PHI = 0.5
     DELTA_MOVE = 0.1
     DELTA_ZOOM = 0.1
 
@@ -68,6 +69,8 @@ class Engine:
         self.move_Y = 0.0
 
         self.zoom = 1.0
+
+        self.light_phi = 0.0
 
         self.camera = np.array([0.0, 0.0, 0.0])
 
@@ -136,6 +139,9 @@ class Engine:
         if np.dot(normal, triangle[0] - self.camera) > 0:
             return None
 
+        self.light_direction = self.vector_from_homo_to_3d(
+            self.matrix_4x4_mul_vector_4x1(self.get_Y_rotation_matrix(self.light_phi), self.light_direction))
+
         # Illumination
         # dot product is in range [-1, 1] because vectors are
         # normalized
@@ -185,7 +191,12 @@ class Engine:
         glutPostRedisplay()
 
     def mouse(self, button, state, x, y):
-        pass
+        if state == GLUT_DOWN and button == GLUT_LEFT_BUTTON:
+            self.light_phi -= self.DELTA_PHI
+        elif state == GLUT_DOWN and button == GLUT_RIGHT_BUTTON:
+            self.light_phi += self.DELTA_PHI
+        print("Touch!")
+        glutPostRedisplay()
 
     def mouse_wheel(self, wheel, direction, x, y):
         if direction < 0 and self.zoom <= 0.1005:  # restriction on the small size
