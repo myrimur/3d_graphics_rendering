@@ -95,20 +95,18 @@ class Engine:
 
     def on_user_update(self) -> None:
         triangles = []
-        colors = []
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for triangle in self.mesh:
-            triangle, color = self.project_triangle(triangle)
-            if triangle is not None:
-                triangles.append(triangle)
-                colors.append(color)
+            pair = self.project_triangle(triangle)
+            if pair is not None:
+                triangles.append(pair)
 
-        triangles = sorted(triangles, key=lambda arr2d: arr2d[0][2] + arr2d[1][2] + arr2d[2][2])
+        triangles = sorted(triangles, key=lambda pair: pair[0][0][2] + pair[0][1][2] + pair[0][2][2])
 
-        for idx in range(0, len(triangles)):
-            self.draw_triangle(triangles[idx], (0.1 * colors[idx], 0.4 * colors[idx], 0.6 * colors[idx]))
+        for triangle, scaler in triangles:
+            self.draw_triangle(triangle, (0.1 * scaler, 0.4 * scaler, 0.6 * scaler))
 
         glFlush()
 
@@ -135,7 +133,7 @@ class Engine:
         # If dot product of triangle's normal and camera-triangle
         # direction is positive, then not
         if np.dot(normal, triangle[0] - self.camera) > 0:
-            return None, None
+            return None
 
         # Illumination
         # dot product is in range [-1, 1] because vectors are
@@ -159,7 +157,8 @@ class Engine:
 
         return triangle, color
 
-    def get_color_scaler(self, dp: float):
+    @staticmethod
+    def get_color_scaler(dp: float):
         return (1.5 + dp) / 2.5
 
     def WASD(self, key, x, y):
@@ -202,7 +201,7 @@ class Engine:
         glVertex2f(triangle[2][0], triangle[2][1])
         glEnd()
 
-        glColor3f(0.0, 0.0, 0.0)
+        glColor3f(color[0] / 2, color[1] / 2, color[2] / 2)
         glBegin(GL_LINE_STRIP)
         glVertex2f(triangle[0][0], triangle[0][1])
         glVertex2f(triangle[1][0], triangle[1][1])
