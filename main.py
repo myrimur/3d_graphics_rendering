@@ -108,7 +108,7 @@ class Engine:
         triangles = sorted(triangles, key=lambda arr2d: arr2d[0][2] + arr2d[1][2] + arr2d[2][2])
 
         for idx in range(0, len(triangles)):
-            self.draw_triangle(triangles[idx], (colors[idx], colors[idx], colors[idx]))
+            self.draw_triangle(triangles[idx], (0.1 * colors[idx], 0.4 * colors[idx], 0.6 * colors[idx]))
 
         glFlush()
 
@@ -141,8 +141,7 @@ class Engine:
         # dot product is in range [-1, 1] because vectors are
         # normalized
         dot_product = np.dot(normal, self.light_direction / np.linalg.norm(self.light_direction))
-        color = self.get_color(float(dot_product))
-        # print(color)
+        color = self.get_color_scaler(float(dot_product))
 
         # Get projection
         triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
@@ -160,8 +159,8 @@ class Engine:
 
         return triangle, color
 
-    def get_color(self, dp: float):
-        return 0.1 * (1.0 + dp)
+    def get_color_scaler(self, dp: float):
+        return (1.5 + dp) / 2.5
 
     def WASD(self, key, x, y):
         if key == b'a':
