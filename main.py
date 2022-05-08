@@ -1,3 +1,5 @@
+"""Module with the engine to render and transform the 3D object in 2D space."""
+
 from time import sleep
 
 from OpenGL.GL import *
@@ -7,6 +9,8 @@ import numpy as np
 
 
 class Engine:
+    """Engine to render and transform the 3D object in 2D space."""
+
     DELAY = 0.01  # time between frames in seconds
 
     DELTA_ALPHA = 1.0  # object rotation angle on WASD
@@ -94,28 +98,28 @@ class Engine:
         glutInitWindowSize(self.window_size[0], self.window_size[1])
         glutInitWindowPosition(self.window_position[0], self.window_position[1])
         self.window = glutCreateWindow(self.app_name)
-        self.on_user_create()
+        self.__on_user_create()
 
         # Loop begins here
         # Perform object rendering
-        glutDisplayFunc(self.on_user_update)
+        glutDisplayFunc(self.__on_user_update)
 
         # Track input from keyboard and mouse
-        glutKeyboardFunc(self.WASD)
-        glutSpecialFunc(self.arrows)
-        glutMouseFunc(self.mouse)
-        glutMouseWheelFunc(self.mouse_wheel)
+        glutKeyboardFunc(self.__WASD)
+        glutSpecialFunc(self.__arrows)
+        glutMouseFunc(self.__mouse)
+        glutMouseWheelFunc(self.__mouse_wheel)
 
         # Enter OpenGL event processing loop
         glutMainLoop()
 
-    def on_user_create(self) -> None:
+    def __on_user_create(self) -> None:
         """Define 2D objects visualisation configuration."""
         glClearColor(0.0, 0.0, 0.0, 0.0)
         glPointSize(self.point_size)
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
-    def on_user_update(self) -> None:
+    def __on_user_update(self) -> None:
         """
         To be called infinitely in the loop. Computes all the transformations
         and renders the object piece-by-piece.
@@ -124,20 +128,21 @@ class Engine:
 
         triangles = []
         for triangle in self.mesh:
-            pair = self.project_triangle(triangle)
+            pair = self.__project_triangle(triangle)
             if pair is not None:  # if triangle is visible
                 triangles.append(pair)
 
         # Sort visible triangles by mean of Z coord
         triangles = sorted(triangles, key=lambda tup: tup[0][0][2] + tup[0][1][2] + tup[0][2][2])
 
-        for triangle, scaler in triangles:
-            self.draw_triangle(triangle, (self.color[0] * scaler, self.color[1] * scaler, self.color[2] * scaler))
+        for triangle, mul in triangles:
+            self.draw_triangle(triangle,
+                               (self.color[0] * mul, self.color[1] * mul, self.color[2] * mul))
 
         glFlush()  # force to render triangles
         sleep(self.DELAY)  # wait until next frame
 
-    def project_triangle(self, triangle: np.array) -> tuple[np.array, float] or None:
+    def __project_triangle(self, triangle: np.array) -> tuple[np.array, float] or None:
         """
         Compute the projection of the triangle into 2D screen. Decide whether
         the triangle should be visible. If so, compute all the transformations,
@@ -145,10 +150,10 @@ class Engine:
         and its color scaled for the depth. Return None otherwise.
         """
         # Rotate by Z
-        triangle = self.apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
+        triangle = self.__apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
 
         # Rotate by X
-        triangle = self.apply_transformation(self.get_X_rotation_matrix(self.alpha_X), triangle)
+        triangle = self.__apply_transformation(self.get_X_rotation_matrix(self.alpha_X), triangle)
 
         # Offset into the screen
         offset = 3.0
@@ -156,7 +161,8 @@ class Engine:
             triangle[row][2] += offset
 
         # Move in space
-        triangle = self.apply_transformation(self.get_translation_matrix(self.move_X, self.move_Y, 0.0), triangle)
+        triangle = self.__apply_transformation(
+            self.get_translation_matrix(self.move_X, self.move_Y, 0.0), triangle)
 
         normal = self.get_normal(triangle)
 
@@ -167,17 +173,20 @@ class Engine:
 
         # Rotate light direction
         light_direction = self.vector_from_homo_to_3d(
-            self.matrix_4x4_mul_vector_4x1(self.get_Y_rotation_matrix(self.light_phi), self.light_direction))
+            self.matrix_4x4_mul_vector_4x1(self.get_Y_rotation_matrix(
+                self.light_phi), self.light_direction))
 
         # Illumination
-        dot_product = np.dot(normal, light_direction)  # is in range [-1, 1] because vectors are normalized
+        # Dot product is in range [-1, 1] because vectors are normalized
+        dot_product = np.dot(normal, light_direction)
         color = self.get_color_scaler(float(dot_product))  # compute scaler for shadows
 
         # Get projection
-        triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
+        triangle = self.__apply_transformation(self.get_projection_matrix(), triangle)
 
         # Zoom in or out
-        triangle = self.apply_transformation(self.get_scale_matrix(self.zoom, self.zoom, self.zoom), triangle)
+        triangle = self.__apply_transformation(
+            self.get_scale_matrix(self.zoom, self.zoom, self.zoom), triangle)
 
         # Scale into view
         view_scale_1 = 1
@@ -194,7 +203,7 @@ class Engine:
         """Transform to get the color scaler in range [0.2, 1.0] for the shadows."""
         return (1.5 + dp) / 2.5
 
-    def WASD(self, key, x, y) -> None:
+    def __WASD(self, key, x, y) -> None:
         """Track keyboard W-A-S-D buttons to rotate the object in space."""
         if key == b'a':
             self.alpha_Z += self.DELTA_ALPHA
@@ -206,7 +215,7 @@ class Engine:
             self.alpha_X -= self.DELTA_ALPHA
         glutPostRedisplay()
 
-    def arrows(self, key, x, y) -> None:
+    def __arrows(self, key, x, y) -> None:
         """Track keyboard arrows buttons to move the screen view around the object."""
         if key == GLUT_KEY_LEFT:
             self.move_X += self.DELTA_MOVE
@@ -218,7 +227,7 @@ class Engine:
             self.move_Y += self.DELTA_MOVE
         glutPostRedisplay()
 
-    def mouse(self, button, state, x, y) -> None:
+    def __mouse(self, button, state, x, y) -> None:
         """Track the left and right clicks of the mouse to rotate the light direction."""
         if state == GLUT_DOWN and button == GLUT_LEFT_BUTTON:
             self.light_phi -= self.DELTA_PHI
@@ -226,7 +235,7 @@ class Engine:
             self.light_phi += self.DELTA_PHI
         glutPostRedisplay()
 
-    def mouse_wheel(self, wheel, direction, x, y) -> None:
+    def __mouse_wheel(self, wheel, direction, x, y) -> None:
         """Track the mouse wheel for scaling the size of object in space."""
         if direction < 0 and self.zoom <= 0.1005:  # restriction on the small size
             return
@@ -243,7 +252,7 @@ class Engine:
         glVertex2f(triangle[2][0], triangle[2][1])
         glEnd()
 
-    def apply_transformation(self, t_matrix: np.array, triangle: np.array) -> np.array:
+    def __apply_transformation(self, t_matrix: np.array, triangle: np.array) -> np.array:
         """
         Multiply initial triangle given as 3x3 matrix by the transformation matrix t_matrix
         in homogeneous coordinates with 4x4 shape. It transforms each point in the triangle
