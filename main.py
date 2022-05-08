@@ -90,15 +90,25 @@ class Engine:
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
     def on_user_update(self) -> None:
+        triangles = []
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for triangle in self.mesh:
-            self.render_triangle(triangle)
+            triangle = self.render_triangle(triangle)
+            if triangle is not None:
+                triangles.append(triangle)
+
+        triangles = sorted(triangles, key=lambda arr2d: arr2d[0][2] + arr2d[1][2] + arr2d[2][2])
+
+        for triangle in triangles:
+            self.draw_triangle(triangle, (0.5, 0.5, 0.5))
+
         glFlush()
 
         sleep(self.DELAY)
 
-    def render_triangle(self, triangle: np.array) -> None:
+    def render_triangle(self, triangle: np.array) -> np.array:
         # Rotate by Z
         triangle = self.apply_transformation(self.get_Z_rotation_matrix(self.alpha_Z), triangle)
 
@@ -129,6 +139,9 @@ class Engine:
 
         if self.triangle_is_visible(triangle):
             self.draw_triangle(triangle, (1, 1, 1))
+            return triangle
+
+        return None
 
     def WASD(self, key, x, y):
         if key == b'a':
