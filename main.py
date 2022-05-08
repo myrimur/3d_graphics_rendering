@@ -177,8 +177,14 @@ class Engine:
     @staticmethod
     def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
         glColor3f(color[0], color[1], color[2])
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         glBegin(GL_TRIANGLE_STRIP)
+        glVertex2f(triangle[0][0], triangle[0][1])
+        glVertex2f(triangle[1][0], triangle[1][1])
+        glVertex2f(triangle[2][0], triangle[2][1])
+        glEnd()
+
+        glColor3f(0.0, 0.0, 0.0)
+        glBegin(GL_LINE_STRIP)
         glVertex2f(triangle[0][0], triangle[0][1])
         glVertex2f(triangle[1][0], triangle[1][1])
         glVertex2f(triangle[2][0], triangle[2][1])
