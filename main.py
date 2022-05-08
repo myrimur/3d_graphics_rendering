@@ -70,6 +70,8 @@ class Engine:
 
         self.camera = np.array([0.0, 0.0, 0.0])
 
+        self.light_direction = np.array([0.0, 0.0, -1.0])
+
     def start(self) -> None:
         glutInit()
         glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
@@ -127,8 +129,16 @@ class Engine:
 
         normal = self.get_normal(triangle)
 
+        # Is triangle visible?
+        # If dot product of triangle's normal and camera-triangle
+        # direction is positive, then not
         if np.dot(normal, triangle[0] - self.camera) > 0:
             return None
+
+        # Illumination
+        # dot product is in range [-1, 1] because vectors are
+        # normalized
+        dot_product = np.dot(normal, self.light_direction / np.linalg.norm(self.light_direction))
 
         # Get projection
         triangle = self.apply_transformation(self.get_projection_matrix(), triangle)
