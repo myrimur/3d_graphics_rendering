@@ -29,6 +29,16 @@ class Engine:
         """
         Initialize the required configurations to use OpenGL, and the
         variables corresponding to object transformations and their states in a space.
+
+        :param app_name: The window title
+        :param window_size: A tuple with (width, height) size of the window
+        :param window_position: A tuple with (x, y) coordinates of the window on screen
+                                with the origin at upper left corner
+        :param point_size: Float value of a point size
+        :param color: A tuple (R, G, B) representing an RGB color as ints from 0 to 255.
+        :param obj_path: A path to the .obj file containing information about vertices and
+                         faces of the object. Note that the faces should be represented as
+                         a triangles.
         """
         self.app_name = app_name
         self.window_size = window_size
@@ -361,4 +371,5 @@ class Engine:
 
 if __name__ == "__main__":
     demo = Engine("3d_demo", (500, 500), (100, 100), 10.0, (0, 102, 200), "data/cube.obj")
+    # TODO: point_size argument seems to be useless
     demo.start()
