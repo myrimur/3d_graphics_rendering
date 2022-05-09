@@ -24,7 +24,8 @@ class Engine:
     near = 1.0  # define the front by Z
 
     def __init__(self, app_name: str, window_size: tuple[int, int],
-                 window_position: tuple[int, int], point_size: float, color: tuple[int, int, int]):
+                 window_position: tuple[int, int], point_size: float,
+                 color: tuple[int, int, int], obj_path: str):
         """
         Initialize the required configurations to use OpenGL, and the
         variables corresponding to object transformations and their states in a space.
@@ -46,32 +47,7 @@ class Engine:
                                    [0,                           0,            self.far / diff,               1],
                                    [0,                           0,            - self.far * self.near / diff, 0]])
 
-        self.mesh = (
-            # Bottom
-            np.array([[0.0,  0.0,  0.0],  [0.0,  1.0,  0.0],  [1.0,  1.0,  0.0]]),
-            np.array([[0.0,  0.0,  0.0],  [1.0,  1.0,  0.0],  [1.0,  0.0,  0.0]]),
-
-            # Left visible
-            np.array([[1.0,  0.0,  0.0],  [1.0,  1.0,  0.0],  [1.0,  1.0,  1.0]]),
-            np.array([[1.0,  0.0,  0.0],  [1.0,  1.0,  1.0],  [1.0,  0.0,  1.0]]),
-
-            # Upper
-            np.array([[1.0,  0.0,  1.0],  [1.0,  1.0,  1.0],  [0.0,  1.0,  1.0]]),
-            np.array([[1.0,  0.0,  1.0],  [0.0,  1.0,  1.0],  [0.0,  0.0,  1.0]]),
-
-            # Right not visible
-            np.array([[0.0,  0.0,  1.0],  [0.0,  1.0,  1.0],  [0.0,  1.0,  0.0]]),
-            np.array([[0.0,  0.0,  1.0],  [0.0,  1.0,  0.0],  [0.0,  0.0,  0.0]]),
-
-            # Right visible
-            np.array([[0.0,  1.0,  0.0],  [0.0,  1.0,  1.0],  [1.0,  1.0,  1.0]]),
-            np.array([[0.0,  1.0,  0.0],  [1.0,  1.0,  1.0],  [1.0,  1.0,  0.0]]),
-
-            # Left not visible
-            np.array([[1.0,  0.0,  1.0],  [0.0,  0.0,  1.0],  [0.0,  0.0,  0.0]]),
-            np.array([[1.0,  0.0,  1.0],  [0.0,  0.0,  0.0],  [1.0,  0.0,  0.0]]),
-        )
-        # TODO: store the input from .obj file
+        self.mesh = self.read_obj_file(obj_path)  # Read mesh from input .obj file
 
         self.alpha_X = 0.0  # Object rotation angle by X
         self.alpha_Z = 0.0  # Object rotation angle by Z
@@ -85,6 +61,33 @@ class Engine:
 
         self.camera = np.array([0.0, 0.0, 0.0])  # Camera direction
         self.light_direction = np.array([0.0, 0.0, -1.0])  # Light direction
+
+    @staticmethod
+    def read_obj_file(path: str) -> tuple[np.array, ...]:
+        """
+        Parse the .obj file with the given path.
+        Finds only vertices and faces given as triangles.
+        Returns the tuple of a 2D np.array each representing
+        a particular triangle with 3 points.
+        """
+        vertices = []  # store vertices
+        mesh = []  # store triangles
+
+        with open(path) as obj:
+            for line in obj:
+                line = line.strip().split()
+                if len(line) == 0: continue
+
+                if line[0] == 'v':  # it is vertex
+                    vertices.append(np.array([float(line[1]), float(line[2]), float(line[3])]))
+
+                elif line[0] == 'f':  # it is face
+                    if '/' in line[1]:  # the vertex information is: idx//norm
+                        for idx in range(1, 4):
+                            line[idx] = line[idx][:line[idx].index('/')]  # ignore norm
+                    mesh.append(np.array([vertices[int(line[1]) - 1], vertices[int(line[2]) - 1],
+                                          vertices[int(line[3]) - 1]]))
+        return tuple(mesh)
 
     def start(self) -> None:
         """
@@ -357,5 +360,5 @@ class Engine:
 
 
 if __name__ == "__main__":
-    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0, (0, 102, 200))
+    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0, (0, 102, 200), "data/cube.obj")
     demo.start()
