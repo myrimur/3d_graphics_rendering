@@ -10,6 +10,10 @@ It has huge application in game development, as 3D-games depends on it, and all 
 ```
 git clone https://github.com/MykhailoSobko/3d_graphics_rendering.git
 ```
+then 
+```
+pip3 install -r requirements.txt
+```
 
 ## Usage
 run
