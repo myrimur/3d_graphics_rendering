@@ -1,11 +1,15 @@
 # 3D graphics rendering 
 This is an engine to render and transform the 3D object in 2D space, written on Python with OpenGL library.
+Given one object representation in 3D, the engine gives the opportunity to view it projected onto a 2D screen with the transformations given from the user, such as rotations, zooming, translation, and changing light direction. 
+This will be useful not only for the study purposes, but also as a fundamental step to developing the real game engine.
 
 ## What is 3D graphics rendering?  
 
 3D rendering is the 3D computer graphics process of converting 3D models into 2D images on a computer. 
 The process of rendering 3D graphics usually involves 3D modeling (lightning and texturing), the rendering itself and refining.
 It has huge application in game development, as 3D-games depends on it, and all based on linear algebra fundamentals.
+
+The project is focused around the real-time computer graphics, or real-time rendering, conceptions. It provides real-time object analysis with an interactive interface through keyboard and mouse. Using the different techniques for rendering, such as ray-tracing and rasterization, the user can respond to rendered images in real time, producing an interactive experience. 
 
 ![cube.gif](demo/demo_cube.gif)
 
