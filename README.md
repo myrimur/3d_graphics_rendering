@@ -7,6 +7,8 @@ This is an engine to render and transform the 3D object in 2D space, written on 
 The process of rendering 3D graphics usually involves 3D modeling (lightning and texturing), the rendering itself and refining.
 It has huge application in game development, as 3D-games depends on it, and all based on linear algebra fundamentals.
 
+![cube.gif](demo/demo_cube.gif)
+
 ## Installation
 ```
 git clone https://github.com/MykhailoSobko/3d_graphics_rendering.git
