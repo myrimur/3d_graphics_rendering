@@ -1,4 +1,5 @@
 # 3D graphics rendering 
+This is engine to render and transform the 3D object in 2D space, written on Python with OpenGL library.
 
 ## What is 3D graphics rendering?  
 
