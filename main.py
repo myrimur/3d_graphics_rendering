@@ -153,7 +153,6 @@ class Engine:
                                (self.color[0] * mul, self.color[1] * mul, self.color[2] * mul))
 
         glFlush()  # force to render triangles
-        sleep(self.DELAY)  # wait until next frame
 
     def __project_triangle(self, triangle: np.array) -> tuple[np.array, float] or None:
         """
