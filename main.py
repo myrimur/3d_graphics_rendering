@@ -181,7 +181,7 @@ class Engine:
 
         # If dot product of triangle's normal and camera-triangle direction is positive,
         # then triangle is not visible
-        if np.dot(normal, triangle[0] - self.camera) > 0:
+        if not normal.any() or np.dot(normal, triangle[0] - self.camera) > 0:
             return None
 
         # Rotate light direction
@@ -365,11 +365,15 @@ class Engine:
         edge_2 = triangle[2] - triangle[0]
 
         normal = np.cross(edge_1, edge_2)
+        norm = np.linalg.norm(normal)
 
-        return normal / np.linalg.norm(normal)
+        if norm != 0:
+            return normal / norm
+        else:
+            return np.array([])
 
 
 if __name__ == "__main__":
-    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0, (0, 102, 200), "data/cube.obj")
+    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0, (0, 102, 200), "data/spaceship.obj")
     # TODO: point_size argument seems to be useless
     demo.start()
