@@ -1,7 +1,5 @@
 """Module with the engine to render and transform the 3D object in 2D space."""
 
-from time import sleep
-
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -24,7 +22,7 @@ class Engine:
     near = 1.0  # define the front by Z
 
     def __init__(self, app_name: str, window_size: tuple[int, int],
-                 window_position: tuple[int, int], point_size: float,
+                 window_position: tuple[int, int],
                  color: tuple[int, int, int], obj_path: str):
         """
         Initialize the required configurations to use OpenGL, and the
@@ -34,7 +32,6 @@ class Engine:
         :param window_size: A tuple with (width, height) size of the window
         :param window_position: A tuple with (x, y) coordinates of the window on screen
                                 with the origin at upper left corner
-        :param point_size: Float value of a point size
         :param color: A tuple (R, G, B) representing an RGB color as ints from 0 to 255.
         :param obj_path: A path to the .obj file containing information about vertices and
                          faces of the object. Note that the faces should be represented as
@@ -43,7 +40,7 @@ class Engine:
         self.app_name = app_name
         self.window_size = window_size
         self.window_position = window_position
-        self.point_size = point_size
+        self.point_size = 10.0
         self.window = None
 
         # Scale colors from RGB as ints into [0, 1] floats
@@ -373,6 +370,5 @@ class Engine:
 
 
 if __name__ == "__main__":
-    demo = Engine("3d_demo", (500, 500), (100, 100), 10.0, (0, 102, 200), "data/spaceship.obj")
-    # TODO: point_size argument seems to be useless
+    demo = Engine("3d_demo", (500, 500), (100, 100), (0, 102, 200), "data/cube.obj")
     demo.start()
