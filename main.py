@@ -143,7 +143,7 @@ class Engine:
                 triangles.append(pair)
 
         # Sort visible triangles by mean of Z coord
-        triangles = sorted(triangles, key=lambda tup: tup[0][0][2] + tup[0][1][2] + tup[0][2][2])
+        triangles = sorted(triangles, key=lambda tup: tup[0][0][2] + tup[0][1][2] + tup[0][2][2], reverse=True)
 
         for triangle, mul in triangles:
             self.draw_triangle(triangle,
