@@ -370,5 +370,5 @@ class Engine:
 
 
 if __name__ == "__main__":
-    demo = Engine("3d_demo", (500, 500), (100, 100), (0, 102, 200), "data/cube.obj")
+    demo = Engine("3d_demo", (500, 500), (100, 100), (0, 102, 200), "data/octahedron.obj")
     demo.start()
