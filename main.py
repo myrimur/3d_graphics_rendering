@@ -40,7 +40,6 @@ class Engine:
         self.app_name = app_name
         self.window_size = window_size
         self.window_position = window_position
-        self.point_size = 10.0
         self.window = None
 
         # Scale colors from RGB as ints into [0, 1] floats
@@ -126,7 +125,7 @@ class Engine:
     def __on_user_create(self) -> None:
         """Define 2D objects visualisation configuration."""
         glClearColor(0.0, 0.0, 0.0, 0.0)
-        glPointSize(self.point_size)
+        glPointSize(10.0)
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
     def __on_user_update(self) -> None:
