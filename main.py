@@ -43,7 +43,6 @@ class Engine:
         self.app_name = app_name
         self.window_size = window_size
         self.window_position = window_position
-        self.point_size = 10.0
         self.window = None
         self.debug_mode = debug_mode
 
@@ -131,7 +130,6 @@ class Engine:
     def __on_user_create(self) -> None:
         """Define 2D objects visualisation configuration."""
         glClearColor(self.background[0], self.background[1], self.background[2], 1.0)
-        glPointSize(self.point_size)
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
     def __on_user_update(self) -> None:
