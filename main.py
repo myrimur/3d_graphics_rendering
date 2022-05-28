@@ -119,7 +119,7 @@ class Engine:
         glutDisplayFunc(self.__on_user_update)
 
         # Track input from keyboard and mouse
-        glutKeyboardFunc(self.__WASD)
+        glutKeyboardFunc(self.__WASD_Tab)
         glutSpecialFunc(self.__arrows)
         glutMouseFunc(self.__mouse)
         glutMouseWheelFunc(self.__mouse_wheel)
@@ -219,8 +219,11 @@ class Engine:
         """Transform to get the color scaler in range [0.2, 1.0] for the shadows."""
         return (1.5 + dp) / 2.5
 
-    def __WASD(self, key, x, y) -> None:
-        """Track keyboard W-A-S-D buttons to rotate the object in space."""
+    def __WASD_Tab(self, key, x, y) -> None:
+        """
+        Track keyboard W-A-S-D buttons to rotate the object in space.
+        The Tab button toggles the debug mode in real-time.
+        """
         if key == b'a':
             self.alpha_Z += self.DELTA_ALPHA
         if key == b'd':
@@ -229,6 +232,8 @@ class Engine:
             self.alpha_X += self.DELTA_ALPHA
         if key == b's':
             self.alpha_X -= self.DELTA_ALPHA
+        if key == b'\t':
+            self.debug_mode = not self.debug_mode
         glutPostRedisplay()
 
     def __arrows(self, key, x, y) -> None:
@@ -263,6 +268,8 @@ class Engine:
         glColor3f(color[0], color[1], color[2])
         if self.debug_mode:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        else:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
         glBegin(GL_TRIANGLE_STRIP)
         glVertex2f(triangle[0][0], triangle[0][1])
