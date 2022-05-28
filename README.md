@@ -11,7 +11,7 @@ It has huge application in game development, as 3D-games depends on it, and all 
 
 The project is focused around the real-time computer graphics, or real-time rendering, conceptions. It provides real-time object analysis with an interactive interface through keyboard and mouse. Using the different techniques for rendering, such as ray-tracing and rasterization, the user can respond to rendered images in real time, producing an interactive experience. 
 
-![cube.gif](demo/demo_cube.gif)
+![](demo/octahedron_full_demo.gif)
 
 ## Installation
 ```
