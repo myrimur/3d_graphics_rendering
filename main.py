@@ -23,7 +23,7 @@ class Engine:
 
     def __init__(self, app_name: str, window_size: tuple[int, int],
                  window_position: tuple[int, int],
-                 color: tuple[int, int, int], obj_path: str):
+                 object_color: tuple[int, int, int], background_color: tuple[int, int, int], obj_path: str, debug_mode: bool = False):
         """
         Initialize the required configurations to use OpenGL, and the
         variables corresponding to object transformations and their states in a space.
@@ -32,19 +32,24 @@ class Engine:
         :param window_size: A tuple with (width, height) size of the window
         :param window_position: A tuple with (x, y) coordinates of the window on screen
                                 with the origin at upper left corner
-        :param color: A tuple (R, G, B) representing an RGB color as ints from 0 to 255.
+        :param object_color: A tuple (R, G, B) representing an RGB color as ints from 0 to 255.
+        :param background_color: A tuple (R, G, B) representing an RGB color as ints from 0 to 255.
         :param obj_path: A path to the .obj file containing information about vertices and
                          faces of the object. Note that the faces should be represented as
                          a triangles.
+        :param debug_mode: If True, renders mesh without filling the triangles,
+                           displaying all the edges, even the invisible ones.
         """
         self.app_name = app_name
         self.window_size = window_size
         self.window_position = window_position
         self.point_size = 10.0
         self.window = None
+        self.debug_mode = debug_mode
 
         # Scale colors from RGB as ints into [0, 1] floats
-        self.color = (color[0] / 255.0, color[1] / 255.0, color[2] / 255.0)
+        self.color = (object_color[0] / 255.0, object_color[1] / 255.0, object_color[2] / 255.0)
+        self.background = (background_color[0] / 255.0, background_color[1] / 255.0, background_color[2] / 255.0)
 
         # Define projection matrix onto screen
         aspect_ratio = float(window_size[1]) / float(window_size[0])  # height / width
@@ -125,7 +130,7 @@ class Engine:
 
     def __on_user_create(self) -> None:
         """Define 2D objects visualisation configuration."""
-        glClearColor(0.0, 0.0, 0.0, 0.0)
+        glClearColor(self.background[0], self.background[1], self.background[2], 1.0)
         glPointSize(self.point_size)
         gluOrtho2D(0, self.window_size[0], 0, self.window_size[1])
 
@@ -143,7 +148,8 @@ class Engine:
                 triangles.append(pair)
 
         # Sort visible triangles by mean of Z coord
-        triangles = sorted(triangles, key=lambda tup: tup[0][0][2] + tup[0][1][2] + tup[0][2][2], reverse=True)
+        if not self.debug_mode:
+            triangles = sorted(triangles, key=lambda tup: tup[0][0][2] + tup[0][1][2] + tup[0][2][2], reverse=True)
 
         for triangle, mul in triangles:
             self.draw_triangle(triangle,
@@ -173,22 +179,25 @@ class Engine:
         triangle = self.__apply_transformation(
             self.get_translation_matrix(self.move_X, self.move_Y, 0.0), triangle)
 
-        normal = self.get_normal(triangle)
+        if not self.debug_mode:
+            normal = self.get_normal(triangle)
 
-        # If dot product of triangle's normal and camera-triangle direction is positive,
-        # then triangle is not visible
-        if not normal.any() or np.dot(normal, triangle[0] - self.camera) > 0:
-            return None
+            # If dot product of triangle's normal and camera-triangle direction is positive,
+            # then triangle is not visible
+            if not normal.any() or np.dot(normal, triangle[0] - self.camera) > 0:
+                return None
 
-        # Rotate light direction
-        light_direction = self.vector_from_homo_to_3d(
-            self.matrix_4x4_mul_vector_4x1(self.get_Y_rotation_matrix(
-                self.light_phi), self.light_direction))
+            # Rotate light direction
+            light_direction = self.vector_from_homo_to_3d(
+                self.matrix_4x4_mul_vector_4x1(self.get_Y_rotation_matrix(
+                    self.light_phi), self.light_direction))
 
-        # Illumination
-        # Dot product is in range [-1, 1] because vectors are normalized
-        dot_product = np.dot(normal, light_direction)
-        color = self.get_color_scaler(float(dot_product))  # compute scaler for shadows
+            # Illumination
+            # Dot product is in range [-1, 1] because vectors are normalized
+            dot_product = np.dot(normal, light_direction)
+            color = self.get_color_scaler(float(dot_product))  # compute scaler for shadows
+        else:
+            color = 1.0
 
         # Get projection
         triangle = self.__apply_transformation(self.get_projection_matrix(), triangle)
@@ -251,10 +260,12 @@ class Engine:
         self.zoom += direction * self.DELTA_ZOOM
         glutPostRedisplay()
 
-    @staticmethod
-    def draw_triangle(triangle: np.array, color: tuple[float, float, float]) -> None:
+    def draw_triangle(self, triangle: np.array, color: tuple[float, float, float]) -> None:
         """Visualize the filled triangle."""
         glColor3f(color[0], color[1], color[2])
+        if self.debug_mode:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+
         glBegin(GL_TRIANGLE_STRIP)
         glVertex2f(triangle[0][0], triangle[0][1])
         glVertex2f(triangle[1][0], triangle[1][1])
@@ -370,5 +381,7 @@ class Engine:
 
 
 if __name__ == "__main__":
-    demo = Engine("3d_demo", (500, 500), (100, 100), (0, 102, 200), "data/octahedron.obj")
+    demo = Engine("3d_demo", (500, 500), (100, 100),
+                  object_color=(255, 255, 0), background_color=(0, 0, 0),
+                  obj_path="data/spaceship.obj", debug_mode=False)
     demo.start()
