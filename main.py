@@ -388,5 +388,5 @@ class Engine:
 if __name__ == "__main__":
     demo = Engine("3d_demo", (500, 500), (100, 100),
                   object_color=(255, 255, 0), background_color=(0, 0, 0),
-                  obj_path="data/spaceship.obj", debug_mode=False)
+                  obj_path="data/cube.obj", debug_mode=False)
     demo.start()
